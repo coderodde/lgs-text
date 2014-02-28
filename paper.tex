@@ -1,0 +1,69 @@
+\documentclass[10pt]{article}
+
+\usepackage[english]{babel}
+\usepackage[utf8x]{inputenc}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{amsfonts}
+\usepackage{amsthm}
+\usepackage{graphicx}
+\usepackage[ruled]{algorithm2e}
+\usepackage{empheq}
+\usepackage{float}
+\usepackage{tikz}
+
+\DeclareRobustCommand{\stirling}{\genfrac\{\}{0pt}{}}
+
+\newtheorem{mydef}{Definition}
+\newtheorem{thm}{Theorem}
+\DeclareMathOperator*{\argmin}{arg\,min}
+
+\title{Simplifying loan graphs}
+\author{Rodion ``rodde'' Efremov}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+We choose to tackle a problem of optimizing loan graphs in terms of edge amount. Whenever we have a directed, weighted graph, edges denote the direction of ``resource flow'' and the weight of each denotes the ``velocity'' of the flow. Assuming each party honors its debts, and returning a debt requires time and energy, it might be sensible to produce a loan graph ``equivalent'' to the original, but having less edges.
+\end{abstract}
+
+\section{Stating the problem} A loan graph is a directed, weighted graph $G = (V, E)$, where $E \subseteq V^2$. Whenever there is a loan from node $u$ to node $v$, $(u, v) \in E$. The amount lent is given by the weight function $w \colon E \to \mathfrak{R}_{>}$. The equity function $e_G \colon G.V \to \mathfrak{R}$ is defined as follows:
+\[
+e_G(u) = \sum_{(u, v) \in G.E} w(u, v) - \sum_{(v, u) \in G.E} w(v, u).
+\]
+\begin{mydef}
+Two loan graphs, $G_1 = (V_1, E_1)$ and $G_2 = (V_2, E_2)$ are said to be \textbf{equivalent} if and only if there exists a bijection $f \colon V_1 \to V_2$ such that for all $v \in V_1$, $e_{G_1}(v) = e_{G_2}(f(v))$ and we denote such a fact by stating $G_1 \sim G_2$.
+\end{mydef}
+\noindent Given an input loan graph $G$, we wish to find a loan graph $G'$ such that 
+\[
+G' \in \argmin_{G'' \sim G} |G''.E|.
+\]
+\begin{mydef}
+A \textbf{group} is any vertex set $\mathfrak{G} \subseteq V$ such that $\sum_{u \in \mathfrak{G}} e(u) = 0$. A group $\mathfrak{G}$ is said to be a \textbf{proper group} if and only if it cannot be partitioned in two sets $S$ and $\mathfrak{G} \setminus S$ such that $S$ and $\mathfrak{G} \setminus S$ are groups.
+\end{mydef}
+\noindent It follows from the definition of a loan graph that for any loan graph $G$, $G.V$ is a group. Also it is clear that a proper group $\mathfrak{G}$ can be reconnected with exactly $|\mathfrak{G}| - 1$ edges such that equities are preserved. In order to minimize the edge amount, we need to maximize the amount of groups. Whenever we have $V_+ = \{u \in V \colon e(u) > 0\}$ and $V_- = \{u \in V \colon e(u) < 0\}$, the amount of proper groups in $V$ is no more than $\min \{ |V_+|, |V_-|\}$ as any non-trivial group contains at least one node from $V_+$ and at least one node from $V_-$.
+\begin{mydef}
+The \textbf{order} of a group $\mathfrak{G}$ is simply the amount of vertices in a group, i.e., $|\mathfrak{G}|$. 
+\end{mydef}
+\begin{mydef}
+A \textbf{binary group} $\{ u, v \}$ from $G$, is a proper group of order 2 ($e_G(u) = - e_G(v) \neq 0$).
+\end{mydef}
+\begin{mydef}
+A \textbf{trivial} group is any vertex $u$ with $e(u) = 0$.
+\end{mydef}
+\begin{thm}[Binary group theorem]
+In any loan graph $G$ with $N$ proper groups, $k \leq N$ of which are binary, resolving all binary groups in greedy fashion before computing the higher-order groups does not necessarily lead to suboptimal solution.
+\end{thm}
+\begin{proof}
+Suppose the contrary: resolving all $k$ binary groups leaves in the graph $N - k$ proper groups. Now, by definition of suboptimality we have $k + (N - k) < N$, which is absurd.
+\end{proof}
+\section{Exact solutions} Suppose we are given $V_+$ and $V_-$. One solution is to generate all partitions of $V_+$, and for each partition of $V_+$ generate all possible partitions of $V_-$. Once generating a single partition requires $O(n)$ time, it is obvious that running time of an exact, yet brute-force algorithm to simplify a graph $G = (V, E)$ is
+\[
+O\Bigg( |V_+| \sum_{i = 1}^{|V_+|}\stirling{|V_+|}{i} \Bigg( |V_-| \sum_{j = 1}^{|V_-|} \stirling{|V_-|}{j} \Bigg) \Bigg).
+\]
+We , nonetheless, can do better. Suppose we have along the general partition generator (capable to generate all the partitions) a specialized generator generating only all $k$-partitions. Assuming the latter can do it in linear time, the running time for the entire algorithm reduces to
+\[
+O\Bigg( |V_+| | V_- | \sum_{i = 1}^{ \min \{ |V_+|, |V_-| \} } \stirling{ \min \{ |V_+|, |V_-|\} }{ i } \stirling{ \max\{ |V_+|, | V_- | \} }{ i } \Bigg).
+\]
+\end{document}
